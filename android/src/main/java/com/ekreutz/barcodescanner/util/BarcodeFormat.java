@@ -1,6 +1,6 @@
 package com.ekreutz.barcodescanner.util;
 
-import com.google.android.gms.vision.barcode.Barcode;
+import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,19 +20,19 @@ public class BarcodeFormat {
     static {
         // Initialize integer to string map
         Map<Integer, String> map = new HashMap<>();
-        map.put(Barcode.CODE_128, "CODE_128");
-        map.put(Barcode.CODE_39, "CODE_39");
-        map.put(Barcode.CODE_93, "CODE_93");
-        map.put(Barcode.CODABAR, "CODABAR");
-        map.put(Barcode.DATA_MATRIX, "DATA_MATRIX");
-        map.put(Barcode.EAN_13, "EAN_13");
-        map.put(Barcode.EAN_8, "EAN_8");
-        map.put(Barcode.ITF, "ITF");
-        map.put(Barcode.QR_CODE, "QR_CODE");
-        map.put(Barcode.UPC_A, "UPC_A");
-        map.put(Barcode.UPC_E, "UPC_E");
-        map.put(Barcode.PDF417, "PDF417");
-        map.put(Barcode.AZTEC, "AZTEC");
+        map.put(FirebaseVisionBarcode.FORMAT_CODE_128, "CODE_128");
+        map.put(FirebaseVisionBarcode.FORMAT_CODE_39, "CODE_39");
+        map.put(FirebaseVisionBarcode.FORMAT_CODE_93, "CODE_93");
+        map.put(FirebaseVisionBarcode.FORMAT_CODABAR, "CODABAR");
+        map.put(FirebaseVisionBarcode.FORMAT_DATA_MATRIX, "DATA_MATRIX");
+        map.put(FirebaseVisionBarcode.FORMAT_EAN_13, "EAN_13");
+        map.put(FirebaseVisionBarcode.FORMAT_EAN_8, "EAN_8");
+        map.put(FirebaseVisionBarcode.FORMAT_ITF, "ITF");
+        map.put(FirebaseVisionBarcode.FORMAT_QR_CODE, "QR_CODE");
+        map.put(FirebaseVisionBarcode.FORMAT_UPC_A, "UPC_A");
+        map.put(FirebaseVisionBarcode.FORMAT_UPC_E, "UPC_E");
+        map.put(FirebaseVisionBarcode.FORMAT_PDF417, "PDF417");
+        map.put(FirebaseVisionBarcode.FORMAT_AZTEC, "AZTEC");
         FORMATS = Collections.unmodifiableMap(map);
 
 

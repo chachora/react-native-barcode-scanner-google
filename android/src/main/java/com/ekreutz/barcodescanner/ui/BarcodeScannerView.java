@@ -16,27 +16,23 @@ import android.view.ViewGroup;
 
 import com.ekreutz.barcodescanner.camera.CameraSource;
 import com.ekreutz.barcodescanner.camera.CameraSourcePreview;
-import com.ekreutz.barcodescanner.util.BarcodeFormat;
+import com.ekreutz.barcodescanner.util.BarcodeScanningProcessor;
+import com.ekreutz.barcodescanner.util.VisionImageProcessor;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.vision.MultiProcessor;
-import com.google.android.gms.vision.Tracker;
-import com.google.android.gms.vision.barcode.Barcode;
-import com.google.android.gms.vision.barcode.BarcodeDetector;
 
 import java.io.IOException;
 
-public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFocusCallback, MultiProcessor.Factory<Barcode> {
+public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFocusCallback {
 
     private final static String TAG = "BARCODE_CAPTURE_VIEW";
     private final Context mContext;
     private boolean hasAllCapabilities = false; // barcode scanner library and newest play services
 
-    private static final String BARCODE_FOUND_KEY = "barcode_found";
     private static final String LOW_STORAGE_KEY = "low_storage";
     private static final String NOT_YET_OPERATIONAL = "not_yet_operational";
     private static final String NO_PLAY_SERVICES_KEY = "no_play_services";
@@ -60,7 +56,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
 
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
-    private BarcodeDetector mBarcodeDetector;
+    private VisionImageProcessor mBarcodeDetector;
     private boolean mIsPaused = true;
 
     private int mBarcodeTypes = 0; // 0 for all supported types
@@ -277,7 +273,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
     @SuppressLint("InlinedApi")
     private void createCameraSource() {
         // set preferred mBarcodeTypes before this :)
-        BarcodeDetector barcodeDetector = createBarcodeDetector();
+        VisionImageProcessor barcodeDetector = createBarcodeDetector();
 
         if (!hasNecessaryCapabilities()) {
             return;
@@ -294,18 +290,10 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
                 .build();
     }
 
-    private BarcodeDetector createBarcodeDetector() {
-        // A barcode detector is created to track barcodes.  An associated multi-processor instance
-        // is set to receive the barcode detection results, and track the barcodes.
-        // The factory is used by the multi-processor to
-        // create a separate tracker instance for each barcode.
-        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(mContext)
-            .setBarcodeFormats(mBarcodeTypes)
-            .build();
+    private VisionImageProcessor createBarcodeDetector() {
+        mBarcodeDetector = new BarcodeScanningProcessor(this);
 
-        barcodeDetector.setProcessor(new MultiProcessor.Builder<>(this).build());
-
-        return mBarcodeDetector = barcodeDetector;
+        return mBarcodeDetector;
     }
 
     /**
@@ -349,25 +337,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
         Log.d(TAG, "Did autofocus.");
     }
 
-    @Override
-    public Tracker<Barcode> create(Barcode barcode) {
-        return new Tracker<Barcode>() {
-            /**
-             * Start tracking the detected item instance within the item overlay.
-             */
-            @Override
-            public void onNewItem(int id, Barcode item) {
-                // Act on new barcode found
-                WritableMap event = Arguments.createMap();
-                event.putString("data", item.displayValue);
-                event.putString("type", BarcodeFormat.get(item.format));
-
-                sendNativeEvent(BARCODE_FOUND_KEY, event);
-            }
-        };
-    }
-
-    private void sendNativeEvent(String key, WritableMap event) {
+    public void sendNativeEvent(String key, WritableMap event) {
         if (getId() < 0) {
             Log.w(TAG, "Tried to send native event with negative id!");
             return;

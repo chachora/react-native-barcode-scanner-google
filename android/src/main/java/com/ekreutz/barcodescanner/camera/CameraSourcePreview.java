@@ -25,8 +25,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 
+import com.ekreutz.barcodescanner.util.VisionImageProcessor;
 import com.google.android.gms.common.images.Size;
-import com.google.android.gms.vision.Detector;
 
 import java.io.IOException;
 
@@ -110,7 +110,7 @@ public class CameraSourcePreview extends ViewGroup {
 
     // Can be quite heavy, since it stops and restarts the camera
     @RequiresPermission(Manifest.permission.CAMERA)
-    public void replaceBarcodeDetector(Detector<?> detector, boolean shouldResume) throws IOException, SecurityException {
+    public void replaceBarcodeDetector(VisionImageProcessor detector, boolean shouldResume) throws IOException, SecurityException {
         if (mCameraSource != null) {
             mCameraSource.release();
             mCameraSource.setDetector(detector);
