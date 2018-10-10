@@ -36,6 +36,7 @@ public class CameraSourcePreview extends ViewGroup {
     public static final int FILL_MODE_COVER = 0;
     public static final int FILL_MODE_FIT = 1;
 
+    private GraphicOverlay mOverlay;
     private Context mContext;
     private SurfaceView mSurfaceView;
     private boolean mStartRequested;
@@ -53,6 +54,9 @@ public class CameraSourcePreview extends ViewGroup {
         mSurfaceView = new SurfaceView(context);
         mSurfaceView.getHolder().addCallback(new SurfaceCallback());
         addView(mSurfaceView);
+
+        mOverlay = new GraphicOverlay(context, null);
+        addView(mOverlay);
     }
 
     @RequiresPermission(Manifest.permission.CAMERA)
@@ -87,6 +91,19 @@ public class CameraSourcePreview extends ViewGroup {
     private void startIfReady() throws IOException, SecurityException {
         if (mStartRequested && mSurfaceAvailable && mCameraSource != null) {
             mCameraSource.start(mSurfaceView.getHolder());
+            if (mOverlay != null) {
+                Size size = mCameraSource.getPreviewSize();
+                int min = Math.min(size.getWidth(), size.getHeight());
+                int max = Math.max(size.getWidth(), size.getHeight());
+                if (isPortraitMode()) {
+                    // Swap width and height sizes when in portrait, since it will be rotated by
+                    // 90 degrees
+                    mOverlay.setCameraInfo(min, max, mCameraSource.getCameraFacing());
+                } else {
+                    mOverlay.setCameraInfo(max, min, mCameraSource.getCameraFacing());
+                }
+                mOverlay.clear();
+            }
             mStartRequested = false;
         }
     }
@@ -173,7 +190,7 @@ public class CameraSourcePreview extends ViewGroup {
 
         double scaleRatio = Math.min(mWidth / (double) previewWidth, mHeight / (double) previewHeight);
 
-        int childLeft = (int) Math.round((mWidth - scaleRatio * previewWidth) / 2) + 1;
+        int childLeft = (int) Math.round((mWidth - scaleRatio * previewWidth) / 2);
         int childRight = (int) Math.round((mWidth + scaleRatio * previewWidth) / 2) - 1;
         int childTop = (int) Math.round((mHeight - scaleRatio * previewHeight) / 2) + 1;
         int childBottom = (int) Math.round((mHeight + scaleRatio * previewHeight) / 2) - 1;
@@ -196,6 +213,7 @@ public class CameraSourcePreview extends ViewGroup {
 
         setScaleX(r);
         setScaleY(r);
+
 
         // Step 4: try starting the stream again (if needed) after our modifications
         // --------------------------------

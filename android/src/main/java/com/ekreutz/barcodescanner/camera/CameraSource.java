@@ -19,8 +19,13 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.os.Build;
@@ -38,6 +43,7 @@ import com.google.android.gms.common.images.Size;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.Frame;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.Thread.State;
 import java.lang.annotation.Retention;
@@ -851,6 +857,12 @@ public class CameraSource {
         // setting mFlashMode to the one set in the params
         mFlashMode = parameters.getFlashMode();
 
+        // Focus and metering areas
+        ArrayList<Camera.Area> areas = new ArrayList<>();
+        areas.add(new Camera.Area(new Rect(-100, -100, 100, 100), 1000));
+        parameters.setFocusAreas(areas);
+        parameters.setMeteringAreas(areas);
+
         camera.setParameters(parameters);
 
         // Four frame buffers are needed for working with the camera:
@@ -1244,9 +1256,22 @@ public class CameraSource {
                         return;
                     }
 
+                    YuvImage yuv = new YuvImage(mPendingFrameData.array(), ImageFormat.NV21, mPreviewSize.getWidth(), mPreviewSize.getHeight(), null);
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    float height = (float) mPreviewSize.getWidth() * (float) 0.2;
+                    float blockHeight = (mPreviewSize.getWidth() - height) / 2;
+                    yuv.compressToJpeg(new Rect(0,0, mPreviewSize.getWidth(), mPreviewSize.getHeight()), 100, out);
+                    byte[] compressed = out.toByteArray();
+                    Bitmap tmpBmp = BitmapFactory.decodeByteArray(compressed, 0 , compressed.length);
+                    Matrix matrix = new Matrix();
+                    matrix.postRotate(90);
+                    Bitmap tmpBmp1 = Bitmap.createBitmap(tmpBmp, 0,0, mPreviewSize.getWidth(), mPreviewSize.getHeight(), matrix, true);
+                    Bitmap bmp = Bitmap.createBitmap(tmpBmp1, 0, (int)blockHeight, mPreviewSize.getHeight(), (int) height);
+                    
                     outputFrame = new Frame.Builder()
-                            .setImageData(mPendingFrameData, mPreviewSize.getWidth(),
-                                    mPreviewSize.getHeight(), ImageFormat.NV21)
+                            .setBitmap(bmp)
+//                            .setImageData(mPendingFrameData, mPreviewSize.getWidth(),
+//                                    mPreviewSize.getHeight(), ImageFormat.NV21)
                             .setId(mPendingFrameId)
                             .setTimestampMillis(mPendingTimeMillis)
                             .setRotation(mRotation)
