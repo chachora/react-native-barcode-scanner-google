@@ -190,7 +190,7 @@ public class CameraSourcePreview extends ViewGroup {
 
         double scaleRatio = Math.min(mWidth / (double) previewWidth, mHeight / (double) previewHeight);
 
-        int childLeft = (int) Math.round((mWidth - scaleRatio * previewWidth) / 2);
+        int childLeft = (int) Math.round((mWidth - scaleRatio * previewWidth) / 2) + 1;
         int childRight = (int) Math.round((mWidth + scaleRatio * previewWidth) / 2) - 1;
         int childTop = (int) Math.round((mHeight - scaleRatio * previewHeight) / 2) + 1;
         int childBottom = (int) Math.round((mHeight + scaleRatio * previewHeight) / 2) - 1;
