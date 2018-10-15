@@ -53,6 +53,7 @@ public class GraphicOverlay extends View {
   private int facing = CameraSource.CAMERA_FACING_BACK;
   private Set<Graphic> graphics = new HashSet<>();
   private final Paint paint;
+  private final Paint greenPaint;
   private static final int TEXT_COLOR = Color.WHITE;
   private static final float TEXT_SIZE = 54.0f;
   private static final float STROKE_WIDTH = 4.0f;
@@ -130,7 +131,10 @@ public class GraphicOverlay extends View {
     paint = new Paint();
     paint.setColor(Color.BLACK);
     paint.setTextSize(TEXT_SIZE);
-    paint.setAlpha(200);
+    paint.setAlpha(50);
+
+    greenPaint = new Paint();
+    greenPaint.setColor(Color.GREEN);
   }
 
   /** Removes all graphics from the overlay. */
@@ -188,6 +192,8 @@ public class GraphicOverlay extends View {
 
       float height = (float) canvas.getHeight() * (float) 0.2;
       float blockHeight = (canvas.getHeight() - height) / 2;
+      canvas.drawLine(0, blockHeight, canvas.getWidth(), blockHeight, greenPaint);
+      canvas.drawLine(0, blockHeight + height, canvas.getWidth(), blockHeight + height, greenPaint);
       canvas.drawRect(0,0, canvas.getWidth(), blockHeight, paint);
       canvas.drawRect(0, blockHeight + height, canvas.getWidth(), canvas.getHeight(), paint);
     }
