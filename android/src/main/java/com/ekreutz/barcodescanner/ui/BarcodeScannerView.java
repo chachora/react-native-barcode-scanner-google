@@ -64,6 +64,7 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
     private boolean mIsPaused = true;
 
     private int mBarcodeTypes = 0; // 0 for all supported types
+    private int mFocusMode = -1;
 
     public BarcodeScannerView(Context context) {
         super(context);
@@ -230,7 +231,11 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
             focusMode = 0;
         }
 
-        return mCameraSource != null && mCameraSource.setFocusMode(PREFERRED_FOCUS_MODES[focusMode]);
+        if (mCameraSource != null)
+            mCameraSource.setFocusMode(PREFERRED_FOCUS_MODES[focusMode]);
+        else
+            mFocusMode = focusMode;
+        return true;
     }
 
     /**
@@ -292,6 +297,11 @@ public class BarcodeScannerView extends ViewGroup implements CameraSource.AutoFo
                 .setRequestedFps(15.0f)
                 .setPreferredFocusModes(PREFERRED_FOCUS_MODES)
                 .build();
+
+        if (mFocusMode != -1) {
+            setFocusMode(mFocusMode);
+            mFocusMode = -1;
+        }
     }
 
     private BarcodeDetector createBarcodeDetector() {

@@ -345,19 +345,19 @@ public class CameraSource {
         }
     }
 
-    public Camera.Parameters getParameters() {
-        synchronized (mCameraLock) {
+    public synchronized Camera.Parameters getParameters() {
             return mCamera.getParameters();
-        }
     }
 
     // Call release() before calling this
     public void setDetector(Detector<?> detector) {
-        if (mFrameProcessor != null && mFrameProcessor.mActive) {
-            throw new RuntimeException("Can't replace detector while frame processor is active!");
-        }
+        synchronized (mCameraLock) {
+            if (mFrameProcessor != null && mFrameProcessor.mActive) {
+                throw new RuntimeException("Can't replace detector while frame processor is active!");
+            }
 
-        this.mFrameProcessor = this.new FrameProcessingRunnable(detector);
+            this.mFrameProcessor = this.new FrameProcessingRunnable(detector);
+        }
     }
 
     /**
@@ -367,8 +367,7 @@ public class CameraSource {
      * @throws IOException if the camera's preview texture or display could not be initialized
      */
     @RequiresPermission(Manifest.permission.CAMERA)
-    public CameraSource start() throws IOException {
-        synchronized (mCameraLock) {
+    public synchronized CameraSource start() throws IOException {
             if (mCamera != null) {
                 return this;
             }
@@ -389,7 +388,6 @@ public class CameraSource {
             mProcessingThread = new Thread(mFrameProcessor);
             mFrameProcessor.setActive(true);
             mProcessingThread.start();
-        }
         return this;
     }
 
@@ -401,8 +399,7 @@ public class CameraSource {
      * @throws IOException if the supplied surface holder could not be used as the preview display
      */
     @RequiresPermission(Manifest.permission.CAMERA)
-    public CameraSource start(SurfaceHolder surfaceHolder) throws IOException {
-        synchronized (mCameraLock) {
+    public synchronized CameraSource start(SurfaceHolder surfaceHolder) throws IOException {
             if (mCamera != null) {
                 return this;
             }
@@ -414,7 +411,6 @@ public class CameraSource {
             mProcessingThread = new Thread(mFrameProcessor);
             mFrameProcessor.setActive(true);
             mProcessingThread.start();
-        }
         return this;
     }
 
@@ -427,8 +423,7 @@ public class CameraSource {
      * Call {@link #release()} instead to completely shut down this camera source and release the
      * resources of the underlying detector.
      */
-    public void stop() {
-        synchronized (mCameraLock) {
+    public synchronized void stop() {
             mFrameProcessor.setActive(false);
             if (mProcessingThread != null) {
                 try {
@@ -466,7 +461,6 @@ public class CameraSource {
                 mCamera.release();
                 mCamera = null;
             }
-        }
     }
 
     /**
@@ -484,8 +478,7 @@ public class CameraSource {
         return mFacing;
     }
 
-    public int doZoom(float scale) {
-        synchronized (mCameraLock) {
+    public synchronized int doZoom(float scale) {
             if (mCamera == null) {
                 return 0;
             }
@@ -514,7 +507,6 @@ public class CameraSource {
             parameters.setZoom(currentZoom);
             mCamera.setParameters(parameters);
             return currentZoom;
-        }
     }
 
     /**
@@ -526,8 +518,7 @@ public class CameraSource {
      * @param shutter the callback for image capture moment, or null
      * @param jpeg    the callback for JPEG image data, or null
      */
-    public void takePicture(ShutterCallback shutter, PictureCallback jpeg) {
-        synchronized (mCameraLock) {
+    public synchronized void takePicture(ShutterCallback shutter, PictureCallback jpeg) {
             if (mCamera != null) {
                 PictureStartCallback startCallback = new PictureStartCallback();
                 startCallback.mDelegate = shutter;
@@ -535,7 +526,6 @@ public class CameraSource {
                 doneCallback.mDelegate = jpeg;
                 mCamera.takePicture(startCallback, null, null, doneCallback);
             }
-        }
     }
 
     /**
@@ -565,8 +555,7 @@ public class CameraSource {
      * @return {@code true} if the focus mode is set, {@code false} otherwise
      * @see #getFocusMode()
      */
-    public boolean setFocusMode(@FocusMode String mode) {
-        synchronized (mCameraLock) {
+    public synchronized boolean setFocusMode(@FocusMode String mode) {
             if (mCamera != null && mode != null) {
                 Camera.Parameters parameters = mCamera.getParameters();
 
@@ -582,7 +571,6 @@ public class CameraSource {
             }
 
             return false;
-        }
     }
 
     /**
@@ -609,8 +597,7 @@ public class CameraSource {
      * @return {@code true} if the flash mode is set, {@code false} otherwise
      * @see #getFlashMode()
      */
-    public boolean setFlashMode(@FlashMode String mode) {
-        synchronized (mCameraLock) {
+    public synchronized boolean setFlashMode(@FlashMode String mode) {
             if (mCamera != null && mode != null) {
                 Camera.Parameters parameters = mCamera.getParameters();
                 if (parameters.getSupportedFlashModes().contains(mode)) {
@@ -622,7 +609,6 @@ public class CameraSource {
             }
 
             return false;
-        }
     }
 
     /**
@@ -643,8 +629,7 @@ public class CameraSource {
      * @param cb the callback to run
      * @see #cancelAutoFocus()
      */
-    public void autoFocus(@Nullable AutoFocusCallback cb) {
-        synchronized (mCameraLock) {
+    public synchronized void autoFocus(@Nullable AutoFocusCallback cb) {
             if (mCamera != null) {
                 CameraAutoFocusCallback autoFocusCallback = null;
                 if (cb != null) {
@@ -653,7 +638,6 @@ public class CameraSource {
                 }
                 mCamera.autoFocus(autoFocusCallback);
             }
-        }
     }
 
     /**
@@ -664,12 +648,10 @@ public class CameraSource {
      *
      * @see #autoFocus(AutoFocusCallback)
      */
-    public void cancelAutoFocus() {
-        synchronized (mCameraLock) {
+    public synchronized void cancelAutoFocus() {
             if (mCamera != null) {
                 mCamera.cancelAutoFocus();
             }
-        }
     }
 
     /**
@@ -679,12 +661,11 @@ public class CameraSource {
      * @return {@code true} if the operation is supported (i.e. from Jelly Bean), {@code false} otherwise
      */
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    public boolean setAutoFocusMoveCallback(@Nullable AutoFocusMoveCallback cb) {
+    public synchronized boolean setAutoFocusMoveCallback(@Nullable AutoFocusMoveCallback cb) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
             return false;
         }
 
-        synchronized (mCameraLock) {
             if (mCamera != null) {
                 CameraAutoFocusMoveCallback autoFocusMoveCallback = null;
                 if (cb != null) {
@@ -693,7 +674,6 @@ public class CameraSource {
                 }
                 mCamera.setAutoFocusMoveCallback(autoFocusMoveCallback);
             }
-        }
 
         return true;
     }
@@ -730,15 +710,13 @@ public class CameraSource {
         private PictureCallback mDelegate;
 
         @Override
-        public void onPictureTaken(byte[] data, Camera camera) {
+        public synchronized void onPictureTaken(byte[] data, Camera camera) {
             if (mDelegate != null) {
                 mDelegate.onPictureTaken(data);
             }
-            synchronized (mCameraLock) {
                 if (mCamera != null) {
                     mCamera.startPreview();
                 }
-            }
         }
     }
 
@@ -856,12 +834,6 @@ public class CameraSource {
 
         // setting mFlashMode to the one set in the params
         mFlashMode = parameters.getFlashMode();
-
-        // Focus and metering areas
-        ArrayList<Camera.Area> areas = new ArrayList<>();
-        areas.add(new Camera.Area(new Rect(-100, -100, 100, 100), 1000));
-        parameters.setFocusAreas(areas);
-        parameters.setMeteringAreas(areas);
 
         camera.setParameters(parameters);
 
@@ -1289,7 +1261,9 @@ public class CameraSource {
                 // frame.
 
                 try {
-                    mDetector.receiveFrame(outputFrame);
+                    synchronized (mCameraLock) {
+                        mDetector.receiveFrame(outputFrame);
+                    }
                 } catch (Throwable t) {
                     Log.e(TAG, "Exception thrown from receiver.", t);
                 } finally {
